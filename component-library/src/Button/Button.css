@@ -1,0 +1,129 @@
+.fp-btn {
+  --fp-btn-bg: var(--fp-primary, #1677ff);
+  --fp-btn-color: #fff;
+  --fp-btn-border: transparent;
+  --fp-btn-padding-x: 14px;
+  --fp-btn-padding-y: 6px;
+  --fp-btn-font-size: 14px;
+  --fp-btn-radius: 6px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--fp-btn-padding-y) var(--fp-btn-padding-x);
+  font-size: var(--fp-btn-font-size);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--fp-btn-color);
+  background: var(--fp-btn-bg);
+  border: 1px solid var(--fp-btn-border);
+  border-radius: var(--fp-btn-radius);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  user-select: none;
+}
+
+.fp-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.fp-btn:active:not(:disabled) {
+  opacity: 0.85;
+}
+
+.fp-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Variants */
+.fp-btn--primary {
+  --fp-btn-bg: var(--fp-primary, #1677ff);
+  --fp-btn-color: #fff;
+  --fp-btn-border: transparent;
+}
+
+.fp-btn--secondary {
+  --fp-btn-bg: #f0f0f0;
+  --fp-btn-color: #000;
+  --fp-btn-border: transparent;
+}
+
+.fp-btn--secondary:hover:not(:disabled) {
+  background: #e6e6e6;
+}
+
+.fp-btn--outline {
+  --fp-btn-bg: transparent;
+  --fp-btn-color: var(--fp-primary, #1677ff);
+  --fp-btn-border: var(--fp-primary, #1677ff);
+}
+
+.fp-btn--outline:hover:not(:disabled) {
+  background: rgba(22, 119, 255, 0.08);
+}
+
+.fp-btn--ghost {
+  --fp-btn-bg: transparent;
+  --fp-btn-color: #000;
+  --fp-btn-border: transparent;
+}
+
+.fp-btn--ghost:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.fp-btn--danger {
+  --fp-btn-bg: #ff4d4f;
+  --fp-btn-color: #fff;
+  --fp-btn-border: transparent;
+}
+
+/* Sizes */
+.fp-btn--sm {
+  --fp-btn-padding-x: 10px;
+  --fp-btn-padding-y: 4px;
+  --fp-btn-font-size: 12px;
+  --fp-btn-radius: 4px;
+}
+
+.fp-btn--lg {
+  --fp-btn-padding-x: 18px;
+  --fp-btn-padding-y: 8px;
+  --fp-btn-font-size: 16px;
+  --fp-btn-radius: 8px;
+}
+
+.fp-btn--block {
+  width: 100%;
+}
+
+/* Loading */
+.fp-btn--loading .fp-btn__content--hidden {
+  visibility: hidden;
+}
+
+.fp-btn__spinner {
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: fp-spin 0.6s linear infinite;
+}
+
+@keyframes fp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fp-btn {
+  position: relative;
+}
+
+.fp-btn--loading .fp-btn__spinner {
+  margin-right: 0;
+}
