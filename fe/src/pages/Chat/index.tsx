@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { chatApi } from './service';
 import { MarkdownContent } from './MarkdownContent';
-import { Button } from '@face-project/ui';
+import { Button, Input } from '@face-project/ui';
 import './index.css';
 interface Message {
   role: 'user' | 'assistant';
@@ -83,7 +83,7 @@ const Chat: React.FC = () => {
         )}
       </div>
       <div className="input-area">
-        <input
+        <Input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -91,7 +91,7 @@ const Chat: React.FC = () => {
           placeholder="和 GLM-4.7 对话..."
           disabled={isLoading}
         />
-        <input
+        <Input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -99,6 +99,7 @@ const Chat: React.FC = () => {
           disabled={isLoading}
           style={{ marginLeft: 8 }}
         />
+        {/* 引入组件库的组件 */}
         <Button size='lg' variant="danger" onClick={handleSend} disabled={isLoading}>发送</Button>
       </div>
     </div>
