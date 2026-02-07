@@ -99,7 +99,7 @@ const Chat: React.FC = () => {
           disabled={isLoading}
           style={{ marginLeft: 8 }}
         />
-        <Button size='lg' variant="primary" onClick={handleSend} disabled={isLoading}>发送</Button>
+        <Button size='lg' variant="danger" onClick={handleSend} disabled={isLoading}>发送</Button>
       </div>
     </div>
   );
