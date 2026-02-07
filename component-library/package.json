@@ -36,13 +36,13 @@
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
     "@storybook/addon-essentials": "^8.4.7",
     "@storybook/addon-interactions": "^8.4.7",
     "@storybook/addon-links": "^8.4.7",
     "@storybook/blocks": "^8.4.7",
-    "@storybook/react-vite": "^8.4.7",
     "@storybook/react": "^8.4.7",
+    "@storybook/react-vite": "^8.4.7",
+    "@types/node": "^22.10.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -51,5 +51,9 @@
     "storybook": "^8.4.7",
     "typescript": "~5.6.2",
     "vite": "^6.0.1"
+  },
+  "dependencies": {
+    "@storybook/addons": "^7.6.17",
+    "@storybook/theming": "^8.6.14"
   }
 }
