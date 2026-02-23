@@ -17,6 +17,16 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
+    {
+      path:'/level',
+      name:'level',
+      component:() =>import('../views/pages/digui/Parent.vue')
+    },
+    {
+      path:'/pinia',
+      name:'pinia',
+      component:() =>import('../views/pages/pinia/Index.vue')
+    }
   ],
 })
 
