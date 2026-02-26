@@ -3,13 +3,19 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import InputCom from './pages/customHook/index'
+import LineCom from './pages/lineChart/index'
+import MoreCom from './pages/moreReport/index'
+import MList from './pages/virtualReport/index'
+import RMList from './pages/virtualReport/rIndex'
+// import G2Com from './pages/antv/com'
+import S2Com from './pages/antv/g2com'
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
     <>
-      <div>
+      {/* <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>
@@ -28,8 +34,20 @@ function App() {
       </div>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
-      </p>
+      </p> */}
       <InputCom/>
+
+      {/* <LineCom /> */}
+
+      {/* <MoreCom/> */}
+
+      {/* <MList/> */}
+
+      {/* <RMList/> */}
+
+      {/* <G2Com/> */}
+
+      <S2Com/>
     </>
   )
 }
