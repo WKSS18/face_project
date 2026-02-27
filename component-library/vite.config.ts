@@ -1,9 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'node:path'
+import dts from 'vite-plugin-dts';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+     // 自动生成类型声明文件，并保持目录结构
+     dts({
+      rollupTypes: true, // Vite 5+ 推荐配置，合并类型声明文件
+    }),
+  ],
   server: {
     port: 5174,
   },
