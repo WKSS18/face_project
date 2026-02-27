@@ -9,6 +9,7 @@ import MList from './pages/virtualReport/index'
 import RMList from './pages/virtualReport/rIndex'
 // import G2Com from './pages/antv/com'
 import S2Com from './pages/antv/g2com'
+import WorkerCom from './pages/worker/index'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -47,7 +48,9 @@ function App() {
 
       {/* <G2Com/> */}
 
-      <S2Com/>
+      {/* <S2Com/> */}
+
+      <WorkerCom/>
     </>
   )
 }
