@@ -24,7 +24,8 @@ echarts.use([
 const styles = {
   container: {
     padding: '20px',
-    maxWidth: '1200px',
+    // maxWidth: '1200px',
+    // width: '1000px',
     margin: '0 auto'
   },
   chartSection: {

@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+      "baseUrl": ".",
+      "paths": {
+        "@/*": ["src/*"]
+      },
+      // 避免其他文件报错，只检测 js
+      "allowJs": true 
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules"]
+  }

@@ -1,9 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-
+import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
+  base:'./',
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
   server: {
     proxy: {
       // 配置代理关键字：以 /api 开头的请求

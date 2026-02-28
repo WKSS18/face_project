@@ -14,10 +14,13 @@
     "@antv/g2": "^5.4.8",
     "@antv/s2": "^2.6.0",
     "@antv/s2-react": "^2.3.1",
+    "@reduxjs/toolkit": "^2.11.2",
     "antd": "^6.3.1",
     "echarts": "^6.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.13.1",
     "react-virtualized": "^9.22.6",
     "react-window": "^1.8.10"
   },
