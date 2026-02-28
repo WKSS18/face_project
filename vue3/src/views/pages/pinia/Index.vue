@@ -19,15 +19,13 @@
 	<script setup>
 	import { useUserStore } from '@/stores/sync'
 	import { storeToRefs } from 'pinia'
-import { watch } from 'vue'
+	import { watch } from 'vue'
 	// 实例化 store
 	const userStore = useUserStore()
 	// 使用 storeToRefs 解构 state 和 getters，保持响应式
 	const { users, loading: isLoading, error } = storeToRefs(userStore)
 	// actions 可以直接从 store 解构，或者直接通过 userStore 调用
 	const { fetchUsers } = userStore
-
-
     watch(users,(nd,od) =>{
         console.log(nd,nd.length,nd[0],nd[0].name,'===')
     })

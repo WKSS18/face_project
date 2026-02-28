@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
 </script>
@@ -84,4 +84,56 @@ nav a:first-of-type {
     margin-top: 1rem;
   }
 }
-</style>
+</style> -->
+
+
+
+
+
+
+  	<script setup>
+	import { storeToRefs } from 'pinia'
+	import { usePermissionStore } from './stores/permissions'
+	import SideMenu from './components/SideMenu.vue' // 引入刚才的菜单组件
+	const permissionStore = usePermissionStore()
+	// 保持响应式
+	const { routes } = storeToRefs(permissionStore)
+	</script>
+	<template>
+	  <!-- 使用 Element Plus 布局容器 -->
+	  <el-container class="layout-container">
+	    <el-aside width="200px">
+	      <!-- 使用我们的递归菜单组件 -->
+	      <side-menu :menu-list="routes" />
+	    </el-aside>
+	    <el-container>
+	      <el-header>Header 区域</el-header>
+	      <el-main>
+	        <!-- 路由视图 -->
+	        <RouterView />
+	      </el-main>
+	    </el-container>
+	  </el-container>
+	</template>
+	<style scoped>
+	.layout-container {
+	  height: 100vh;
+    width: 100vw;
+	}
+	.el-header {
+	  background-color: #b3c0d1;
+	  color: #333;
+	  line-height: 60px;
+	  display: flex;
+	  align-items: center;
+	}
+	.el-aside {
+	  background-color: #545c64;
+	  color: #fff;
+	  overflow-x: hidden; /* 防止菜单折叠时出现滚动条 */
+	}
+	.el-main {
+	  background-color: #e9eef3;
+	  color: #333;
+	}
+	</style>

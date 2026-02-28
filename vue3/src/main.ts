@@ -1,14 +1,20 @@
 import './assets/main.css'
 
-import { createApp } from 'vue'
+import  { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
+import ElementPlus from 'element-plus' // 引入 Element Plus
+import 'element-plus/dist/index.css' // 引入样式
 import App from './App.vue'
 import router from './router'
+
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+app.use(ElementPlus) // 注册组件库
+
+// 【必须】在挂载之前引入 permission.js，让守卫生效
+import './permissions'
 
 app.mount('#app')
