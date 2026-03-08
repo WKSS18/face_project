@@ -1,0 +1,114 @@
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+	    <meta charset="UTF-8">
+	    <title>Three.js WebWorker 全景渐进加载</title>
+	    <style>
+	        body { margin: 0; overflow: hidden; }
+	        canvas { display: block; }
+	        #info {
+	            position: absolute; top: 10px; left: 10px; color: white;
+	            background: rgba(0,0,0,0.5); padding: 10px; font-family: monospace;
+	        }
+	    </style>
+	</head>
+	<body>
+	    <div id="info">正在加载预览图...</div>
+	    <!-- 引入 Three.js -->
+	    <script type="importmap">
+	        {
+	            "imports": {
+	                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+	                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+	            }
+	        }
+	    </script>
+	    <script type="module">
+	        import * as THREE from 'three';
+	        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+	        // 1. 场景初始化
+	        const scene = new THREE.Scene();
+	        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+	        camera.position.set(0, 0, 0.1); // 相机在球体中心
+	        const renderer = new THREE.WebGLRenderer({ antialias: true });
+	        renderer.setSize(window.innerWidth, window.innerHeight);
+	        document.body.appendChild(renderer.domElement);
+	        const controls = new OrbitControls(camera, renderer.domElement);
+	        controls.enableZoom = false;
+	        controls.enablePan = false;
+	        // 2. 资源路径配置
+	        // 低清图 (建议使用 1024x512 或更小的压缩图)
+	        const LOW_RES_URL = 'https://picsum.photos/seed/community_low/1024/512.jpg';
+	        // 高清图 (大图，如 4096x2048 或 8192x4096)
+	        const HIGH_RES_URL = 'https://picsum.photos/seed/community_high/4096/2048.jpg';
+	        // 3. 第一步：立即加载低清图，快速呈现
+	        const textureLoader = new THREE.TextureLoader();
+	        let currentTexture = null;
+	        textureLoader.load(LOW_RES_URL, (lowResTexture) => {
+	            currentTexture = lowResTexture;
+	            currentTexture.colorSpace = THREE.SRGBColorSpace;
+	            currentTexture.minFilter = THREE.LinearFilter;
+	            currentTexture.magFilter = THREE.LinearFilter;
+	            createPanorama(lowResTexture);
+	            document.getElementById('info').innerText = '预览加载完成，正在下载高清图...';
+	            // 低清图加载完成后，立即启动 Web Worker 加载高清图
+	            loadHighResInWorker(HIGH_RES_URL);
+	        });
+	        function createPanorama(texture) {
+	            // 创建球体几何体
+	            const geometry = new THREE.SphereGeometry(500, 60, 40);
+	            // 翻转 X 轴，使纹理贴在内部
+	            geometry.scale(-1, 1, 1);
+	            const material = new THREE.MeshBasicMaterial({ map: texture });
+	            const mesh = new THREE.Mesh(geometry, material);
+	            scene.add(mesh);
+	        }
+	        // 4. 第二步：使用 Web Worker 加载高清图
+	        function loadHighResInWorker(url) {
+	            // 创建 Worker
+	            const worker = new Worker('./texture-loader.worker.js', { type: 'module' });
+	            // 发送加载任务给 Worker
+	            worker.postMessage({ url: url });
+	            // 接收 Worker 处理好的数据
+	            worker.onmessage = function(e) {
+	                const { imageBitmap, width, height } = e.data;
+	                // 创建新的纹理对象
+	                const highResTexture = new THREE.Texture(imageBitmap);
+	                highResTexture.colorSpace = THREE.SRGBColorSpace;
+	                highResTexture.needsUpdate = true;
+	                // 替换场景中的材质纹理
+	                if (scene.children.length > 0) {
+	                    const mesh = scene.children[0];
+	                    mesh.material.map = highResTexture;
+	                    mesh.material.needsUpdate = true;
+	                }
+	                // 内存管理：释放低清图占用的显存
+	                if (currentTexture) {
+	                    currentTexture.dispose();
+	                }
+	                currentTexture = highResTexture;
+	                document.getElementById('info').innerText = '高清全景加载完毕！';
+	                // 终止 Worker
+	                worker.terminate();
+	            };
+	            worker.onerror = function(err) {
+	                console.error('Worker error:', err);
+	                document.getElementById('info').innerText = '高清图加载失败';
+	            };
+	        }
+	        // 5. 渲染循环
+	        function animate() {
+	            requestAnimationFrame(animate);
+	            controls.update();
+	            renderer.render(scene, camera);
+	        }
+	        animate();
+	        // 窗口调整适配
+	        window.addEventListener('resize', () => {
+	            camera.aspect = window.innerWidth / window.innerHeight;
+	            camera.updateProjectionMatrix();
+	            renderer.setSize(window.innerWidth, window.innerHeight);
+	        });
+	    </script>
+	</body>
+	</html>

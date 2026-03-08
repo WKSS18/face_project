@@ -53,3 +53,11 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 })
+
+router.afterEach((to,from) => {
+
+})
+
+router.beforeResolve((to,from,next) => {
+  next()
+})

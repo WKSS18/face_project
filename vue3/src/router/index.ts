@@ -77,6 +77,15 @@ export const asyncRoutes = [
     }
   },
   {
+    path: '/modal',
+    name: 'modal',
+    component: () => import('../views/pages/modal/Modal.vue'),
+    meta: {
+      title: 'modal页面',
+      roles: ['user']   // 只有 user 能进 (假设 admin 也能进，需要在逻辑里写 OR)
+    }
+  },
+  {
     path: '/test',
     name: 'test',
     // 【关键1】父路由必须指定一个组件，该组件内部必须包含 <router-view />
