@@ -335,3 +335,134 @@ function resolvePromise(promise2, x, resolve, reject) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = MyPromise;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * 手写 new 操作符的实现
+ * 模拟 JavaScript 中 new 关键字的行为
+ */
+
+/**
+ * 方式一：基础版本实现
+ * @param {Function} constructor - 构造函数
+ * @param {...any} args - 构造函数参数
+ * @returns {Object} 新创建的对象实例
+ */
+function myNew(constructor, ...args) {
+    // 1. 创建一个空的普通 JavaScript 对象
+    const obj = {};
+
+    // 2. 将新对象的原型指向构造函数的 prototype 属性
+    Object.setPrototypeOf(obj, constructor.prototype);
+
+    // 3. 将构造函数的 this 绑定到新对象，并执行构造函数
+    const result = constructor.apply(obj, args);
+
+    // 4. 如果构造函数返回了一个对象，则返回该对象；否则返回新创建的对象
+    return result instanceof Object ? result : obj;
+}
+
+/**
+ * 方式二：增强版本实现（更严格的类型检查和错误处理）
+ * @param {Function} constructor - 构造函数
+ * @param {...any} args - 构造函数参数
+ * @returns {Object} 新创建的对象实例
+ */
+function myNewEnhanced(constructor, ...args) {
+    // 检查第一个参数是否为函数
+    if (typeof constructor !== 'function') {
+        throw new TypeError('Constructor must be a function');
+    }
+
+    // 创建一个新的对象
+    const instance = Object.create(constructor.prototype);
+
+    // 执行构造函数，绑定 this 到新创建的对象
+    const result = constructor.apply(instance, args);
+
+    // 判断构造函数的返回值是否为对象，如果是则返回该对象，否则返回新创建的对象
+    return (result !== null && (typeof result === 'object' || typeof result === 'function')) ? result : instance;
+}
+
+/**
+ * 方式三：最接近原生 new 行为的实现
+ * @param {Function} Constructor - 构造函数
+ * @param {...any} rest - 构造函数参数
+ * @returns {Object} 新创建的对象实例
+ */
+function nativeNew(Constructor, ...rest) {
+    // ES6 方式创建对象并链接原型
+    const instance = Object.create(Constructor.prototype);
+
+    // 执行构造函数，改变 this 指向
+    const result = Constructor.apply(instance, rest);
+
+    // 确定返回值类型（构造函数可能返回对象）
+    return Object(result) === result ? result : instance;
+}
+
+// 测试用例
+function Person(name, age) {
+    this.name = name;
+    this.age = age;
+}
+
+Person.prototype.sayHello = function () {
+    return `Hello, I'm ${this.name}, ${this.age} years old.`;
+};
+
+// 测试不同的实现方式
+console.log('=== 测试 myNew ===');
+const person1 = myNew(Person, 'Alice', 25);
+console.log(person1); // Person { name: 'Alice', age: 25 }
+console.log(person1.sayHello()); // Hello, I'm Alice, 25 years old.
+
+console.log('\n=== 测试 myNewEnhanced ===');
+const person2 = myNewEnhanced(Person, 'Bob', 30);
+console.log(person2); // Person { name: 'Bob', age: 30 }
+console.log(person2.sayHello()); // Hello, I'm Bob, 30 years old.
+
+console.log('\n=== 测试 nativeNew ===');
+const person3 = nativeNew(Person, 'Charlie', 35);
+console.log(person3); // Person { name: 'Charlie', age: 35 }
+console.log(person3.sayHello()); // Hello, I'm Charlie, 35 years old.
+
+// 测试构造函数返回对象的情况
+function Car(brand) {
+    this.brand = brand;
+    return {
+        type: 'vehicle',
+        brand
+    }; // 显式返回对象
+}
+
+console.log('\n=== 测试构造函数返回对象 ===');
+const car1 = myNew(Car, 'Tesla');
+console.log(car1); // { type: 'vehicle', brand: 'Tesla' }
+
+// 导出函数供其他模块使用
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        myNew,
+        myNewEnhanced,
+        nativeNew
+    };
+}
