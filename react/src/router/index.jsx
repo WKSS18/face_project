@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 import JsCom from '@/pages/JsCom';
 import ReduxCom from '@/pages/ReduxCom';
 import MoreReport from '@/pages/MoreReport'
+import Fetch from '@/pages/fetch'
 const routes = [
     {
         path: '/',
@@ -17,6 +18,11 @@ const routes = [
         path: '/report',
         element: <MoreReport />,
         meta: { title: '报表' }
+    },
+    {
+        path:'/fetch',
+        element:<Fetch/>,
+        meta:{title:'swr'}
     }
 ];
 export default routes;
