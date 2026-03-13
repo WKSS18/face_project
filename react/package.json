@@ -15,6 +15,7 @@
     "@antv/s2": "^2.6.0",
     "@antv/s2-react": "^2.3.1",
     "@reduxjs/toolkit": "^2.11.2",
+    "@tanstack/react-virtual": "^3.13.22",
     "antd": "^6.3.1",
     "echarts": "^6.0.0",
     "react": "^19.2.0",
@@ -24,10 +25,12 @@
     "react-virtualized": "^9.22.6",
     "react-window": "^1.8.10",
     "ser": "^0.1.2",
-    "swr": "^2.4.1"
+    "swr": "^2.4.1",
+    "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@tailwindcss/vite": "^4.2.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",

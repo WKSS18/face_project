@@ -75,7 +75,7 @@ const fetchUserPermissions = () => {
     setTimeout(() => {
       // 假设后端返回用户只能看到 '首页' 和 '系统设置'
       // 如果想模拟不同权限，可以修改这个数组，例如：['/home', '/user']
-      const permissionPaths = ["/redux", "/report", "/", "/fetch"];
+      const permissionPaths = ["/redux", "/report", "/", "/fetch",'/list'];
       resolve(permissionPaths);
     }, 1000); // 模拟 1秒 网络延迟
   });

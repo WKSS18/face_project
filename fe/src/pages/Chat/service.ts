@@ -18,7 +18,7 @@ export const chatApi = async (
         },
         body: JSON.stringify({
           messages: messages,
-          model: 'glm-4.7', // 指定模型
+          model: 'glm-4.5-air', // 指定模型
           temperature: 0.7,
           email,
         }),

@@ -21,6 +21,32 @@ export class ChatController {
   }
 
   /**
+   * 注入“当前日期时间”的 system 提示，帮助大模型感知今天是几号。
+   * 统一使用北京时间，既有自然语言也有 ISO 字符串，便于模型解析。
+   */
+  private buildTodaySystemMessage(): { role: 'system'; content: string } {
+    const now = new Date();
+    const zhDate = now.toLocaleString('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      weekday: 'long',
+    });
+    const iso = new Date(
+      now.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }),
+    ).toISOString();
+    return {
+      role: 'system',
+      content: `今天的当前时间（北京时间）是：${zhDate}，对应 ISO 时间为：${iso}。当用户询问“今天几号”“现在是什么日期/年份/月份”等与当前日期时间相关的问题时，请以此为准回答，不要根据知识截止时间猜测。`,
+    };
+  }
+
+  /**
    * 简单提取“XX天气”中的城市名称，支持中英文。
    */
   private extractCity(text: string): string | null {
@@ -75,29 +101,63 @@ export class ChatController {
    * 调用 Open-Meteo 获取实时天气数据
    */
   private async fetchWeather(city: string): Promise<string | null> {
+    const trimmed = city.trim();
+    if (!trimmed) return null;
+
+    // 优先使用 Open-Meteo（无鉴权、稳定），失败后再降级到 wttr.in
     try {
       const geoRes = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh&format=json`,
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+          trimmed,
+        )}&count=1&language=zh&format=json`,
       );
-      if (!geoRes.ok) return null;
-      const geoData = (await geoRes.json()) as any;
-      const location = geoData?.results?.[0];
-      if (!location) return null;
+      if (geoRes.ok) {
+        const geoData = (await geoRes.json()) as any;
+        const location = geoData?.results?.[0];
+        if (location) {
+          const { latitude, longitude, name, country, admin1 } = location;
+          const weatherRes = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`,
+          );
+          if (weatherRes.ok) {
+            const weatherData = (await weatherRes.json()) as any;
+            const current = weatherData?.current;
+            if (current) {
+              const description = this.mapWeatherCode(current.weather_code);
+              const locationText = [name, admin1, country].filter(Boolean).join(' / ');
+              return `以下为实时天气数据（来自 Open-Meteo）：位置：${locationText}；时间：${current.time}；气温：${current.temperature_2m}°C；体感：${current.apparent_temperature}°C；湿度：${current.relative_humidity_2m}%；风速：${current.wind_speed_10m}m/s；天气状况：${description}。请结合用户问题，用简洁中文回答，并优先使用上述数据。`;
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Open-Meteo 天气查询失败，尝试降级接口', err);
+    }
 
-      const { latitude, longitude, name, country, admin1 } = location;
-      const weatherRes = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`,
+    // 降级：wttr.in（同样免 Key，兼容更多地名）
+    try {
+      const wttrRes = await fetch(
+        `https://wttr.in/${encodeURIComponent(trimmed)}?format=j1`,
       );
-      if (!weatherRes.ok) return null;
-      const weatherData = (await weatherRes.json()) as any;
-      const current = weatherData?.current;
+      if (!wttrRes.ok) return null;
+      const data = (await wttrRes.json()) as any;
+      const current = data?.current_condition?.[0];
       if (!current) return null;
 
-      const description = this.mapWeatherCode(current.weather_code);
-      const locationText = [name, admin1, country].filter(Boolean).join(' / ');
-      return `以下为实时天气数据（来自 Open-Meteo）：位置：${locationText}；时间：${current.time}；气温：${current.temperature_2m}°C；体感：${current.apparent_temperature}°C；湿度：${current.relative_humidity_2m}%；风速：${current.wind_speed_10m}m/s；天气状况：${description}。请结合用户问题，用简洁中文回答，并优先使用上述数据。`;
+      const nearestArea = data?.nearest_area?.[0];
+      const locationText =
+        nearestArea?.areaName?.[0]?.value ||
+        nearestArea?.region?.[0]?.value ||
+        nearestArea?.country?.[0]?.value ||
+        trimmed;
+
+      const time =
+        current.localObsDateTime || current.observation_time || '';
+      const desc = current.weatherDesc?.[0]?.value || '';
+
+      return `以下为实时天气数据（来自 wttr.in）：位置：${locationText}；时间：${time}；气温：${current.temp_C}°C；体感：${current.FeelsLikeC}°C；湿度：${current.humidity}%；风速：${current.windspeedKmph}km/h；天气状况：${desc}。请结合用户问题，用简洁中文回答，并优先使用上述数据。`;
     } catch (err) {
-      console.warn('天气查询失败', err);
+      console.warn('wttr.in 天气查询失败', err);
       return null;
     }
   }
@@ -232,6 +292,64 @@ export class ChatController {
   }
 
   /**
+   * 统一设置 SSE 响应头
+   */
+  private setupSseHeaders(res: Response) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    (res as any).socket?.setNoDelay?.(true);
+  }
+
+  /**
+   * 统一转发到智谱流式接口
+   */
+  private async forwardBigModelStream(options: {
+    res: Response;
+    body: any;
+    messages: any[];
+    model: string;
+  }) {
+    const { res, body, messages, model } = options;
+    const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        ...body,
+        messages,
+        stream: true,
+        model,
+      }),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      res.write(`data: ${JSON.stringify({ error: errorText })}\n\n`);
+      res.end();
+      return;
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      res.end();
+      return;
+    }
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        res.write('data: [DONE]\n\n');
+        break;
+      }
+      const chunk = Buffer.from(value).toString('utf-8');
+      res.write(chunk);
+    }
+    res.end();
+  }
+
+  /**
    * 简单的工具规划：判断是否需要调用天气/股票工具
    */
   private async decideTool(
@@ -300,15 +418,10 @@ export class ChatController {
 
   @Post('stream')
   async stream(@Body() body: any, @Res() res: Response) {
-    // 1. 设置 SSE 响应头
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    (res as any).socket?.setNoDelay?.(true);
+    this.setupSseHeaders(res);
     try {
       const incomingMessages = Array.isArray(body?.messages) ? body.messages : [];
-      let finalMessages = [...incomingMessages];
+      let finalMessages = [this.buildTodaySystemMessage(), ...incomingMessages];
 
       // 如果用户请求天气，追加实时天气的 system 提示
       const lastUser = [...incomingMessages].reverse().find((m) => m?.role === 'user');
@@ -317,6 +430,7 @@ export class ChatController {
         const weatherPrompt = await this.fetchWeather(city);
         if (weatherPrompt) {
           finalMessages = [
+            this.buildTodaySystemMessage(),
             ...incomingMessages,
             {
               role: 'system',
@@ -326,47 +440,13 @@ export class ChatController {
         }
       }
 
-      // 2. 向智谱AI发起请求
-      const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          ...body,
-          messages: finalMessages,
-          // 强制开启流式传输
-          stream: true,
-          // 如果前端没传 model，默认使用 glm-4.7
-          model: body.model || 'glm-4.7',
-        }),
+      const model = body.model || 'glm-4.7';
+      await this.forwardBigModelStream({
+        res,
+        body,
+        messages: finalMessages,
+        model,
       });
-      if (!response.ok) {
-        const errorText = await response.text();
-        res.write(`data: ${JSON.stringify({ error: errorText })}\n\n`);
-        res.end();
-        return;
-      }
-      // 3. 处理流式转发
-      const reader = response.body?.getReader();
-      if (!reader) {
-        res.end();
-        return;
-      }
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          // 智谱AI结束时的标志通常是 data: [DONE]
-          res.write('data: [DONE]\n\n');
-          break;
-        }
-        // 将智谱AI返回的二进制数据直接解码并传给前端
-        // 智谱AI返回的是标准 SSE 格式，所以直接转发即可
-        const chunk = Buffer.from(value).toString('utf-8');
-        res.write(chunk);
-      }
-      res.end();
     } catch (error) {
       console.error('Stream Error:', error);
       res.write(`data: ${JSON.stringify({ error: 'Server Internal Error' })}\n\n`);
@@ -379,14 +459,10 @@ export class ChatController {
    */
   @Post('agent-stream')
   async agentStream(@Body() body: any, @Res() res: Response) {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    (res as any).socket?.setNoDelay?.(true);
+    this.setupSseHeaders(res);
     try {
       const incomingMessages = Array.isArray(body?.messages) ? body.messages : [];
-      let finalMessages = [...incomingMessages];
+      let finalMessages = [this.buildTodaySystemMessage(), ...incomingMessages];
       const model = body.model || 'glm-4.7';
       const emailTo: string | undefined =
         typeof body.email === 'string' && body.email.includes('@') ? body.email.trim() : undefined;
@@ -412,41 +488,12 @@ export class ChatController {
       }
 
       // 2) 继续走原有流式对话
-      const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          ...body,
-          messages: finalMessages,
-          stream: true,
-          model,
-        }),
+      await this.forwardBigModelStream({
+        res,
+        body,
+        messages: finalMessages,
+        model,
       });
-      if (!response.ok) {
-        const errorText = await response.text();
-        res.write(`data: ${JSON.stringify({ error: errorText })}\n\n`);
-        res.end();
-        return;
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        res.end();
-        return;
-      }
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          res.write('data: [DONE]\n\n');
-          break;
-        }
-        const chunk = Buffer.from(value).toString('utf-8');
-        res.write(chunk);
-      }
-      res.end();
     } catch (error) {
       console.error('Agent Stream Error:', error);
       res.write(`data: ${JSON.stringify({ error: 'Server Internal Error' })}\n\n`);

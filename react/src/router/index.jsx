@@ -3,6 +3,7 @@ import JsCom from '@/pages/JsCom';
 import ReduxCom from '@/pages/ReduxCom';
 import MoreReport from '@/pages/MoreReport'
 import Fetch from '@/pages/fetch'
+import List from '@/pages/VirtualList'
 const routes = [
     {
         path: '/',
@@ -23,6 +24,12 @@ const routes = [
         path:'/fetch',
         element:<Fetch/>,
         meta:{title:'swr'}
+    },
+    {
+        path:'/list',
+        element:<List/>,
+        meta:{title:'list'}
+
     }
 ];
 export default routes;
